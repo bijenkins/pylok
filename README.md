@@ -60,19 +60,22 @@ pprint(lock_data)
     'lock_action': 'lock'
 }
 
+# This information can now be used conditionally elsewhere to act upon locks, and the data in the lock file.
 
-# This information can now be used contionally elsewhere to act upon locks, and the data in the lock file.
-
-# Later during deployment in a automated cmdline script or script
+# Later during deployment we want to check the lock status before proceeding
 lock_data.update({'lock_action': 'status'})
 
-lock_data = lock('/tmp/locks/', lock_data['data']['server], lock_data=lock_data, lock_action=lock_data['lock_action'],
+lock_data = lock('/tmp/locks/', lock_data['data']['server], lock_data=lock_data, lock_action=lock_data['lock_action'])
 
 obj_status = lock_data['data']['status']
 obj_name = lock_data['data']['server']
 
-if obj_status == 'MAINT:
+if obj_status == 'MAINT':
     deploy_to.Server(obj_name)
+
+# Unlock the file after completion.
+lock_data.update({'lock_action': 'unlock'})
+lock('/tmp/locks/', lock_data['data']['server], lock_data=lock_data, lock_action=lock_data['lock_action'])
 
 ```
 
