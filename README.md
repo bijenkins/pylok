@@ -52,10 +52,8 @@ pprint(lock_data)
 
 lock_data.update({'msg': 'Locking App1 on servera-clusterb-1 for canary deployment',
                 'data': {'backend': 'App1', 'server': 'servera-clusterb-1', 'status': 'MAINT'},
-                'contact': 'Billy Jenkins',
                 'contact_email': 'billyjenkins@example.com',
                 'datetime': '2019-12-19 09:26:03.478039',
-                'expire': '2019-12-20 00:00:00',
                 'lock_action': 'lock'})
 
 # This information can now be used conditionally elsewhere to act upon locks, 
@@ -75,10 +73,27 @@ obj_name = lock_data['data']['server']
 
 if obj_status == 'MAINT':
     deploy_to.Server(obj_name)
+    
+pprint(lock_data)
+
+# lock() will update the lock_data dictionary with the information with the
+# new lock info.
+{ 
+    'msg': 'Locking App1 on servera-clusterb-1 for canary deployment',
+    'data': {'backend': 'App1', 'server': 'servera-clusterb-1', 'status': 'MAINT'},
+    'contact_email': 'billyjenkins@example.com',
+    'datetime': '2019-12-19 09:26:03.478039',
+    'lock_action': 'lock'
+    'lock_file_location': '/tmp/locks/server-cluster3w1-2.lock',
+    'lock_file_status': 'locked'
+    'lock_action': 'lock'
+}
 
 # Unlock the file after completion.
 lock_data.update({'lock_action': 'unlock'})
 
+# Will return a dictionary of combined lock information and dictionary
+# passed in the lock_data parameter. 
 lock('/tmp/locks/',
     lock_data['data']['server],
     lock_data=lock_data,
@@ -148,7 +163,6 @@ pprint(lock_data)
     'lock_action': 'lock'
 }
 
-```
 
 # Expire could be controlled by a external audit/state scraper that deletes the lock at expire time.
 
