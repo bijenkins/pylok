@@ -50,8 +50,8 @@ pprint(lock_data)
     'lock_action': 'lock'
 }
 
-lock_data.update({'msg': 'Locking App1 on servera-clusterb-1 for canary deployment',
-                'data': {'backend': 'App1', 'server': 'servera-clusterb-1', 'status': 'MAINT'},
+lock_data.update({'msg': 'Locking App1 on server-cluster3w1-2 for canary deployment',
+                'data': {'backend': 'App1', 'server': 'server-cluster3w1-2', 'status': 'MAINT'},
                 'contact_email': 'billyjenkins@example.com',
                 'datetime': '2019-12-19 09:26:03.478039',
                 'lock_action': 'lock'})
@@ -67,27 +67,31 @@ lock_data = lock('/tmp/locks/',
             lock_data['data']['server],
             lock_data=lock_data,
             lock_action=lock_data['lock_action'])
+           
+ pprint(lock_data)
+
+{ 
+    'msg': 'Locking App1 on server-cluster3w1-2 for canary deployment',
+    'data': {'backend': 'App1', 'server': 'server-cluster3w1-2', 'status': 'MAINT'},
+    'contact_email': 'billyjenkins@example.com',
+    'datetime': '2019-12-19 09:26:03.478039',
+    'lock_file_location': '/tmp/locks/server-cluster3w1-2.lock',
+    'lock_file_status': 'locked'
+    'lock_action': 'status'
+}
+
+# lock() will update the lock_data dictionary with the information with the
+# new lock info.
 
 obj_status = lock_data['data']['status']
 obj_name = lock_data['data']['server']
 
-if obj_status == 'MAINT':
-    deploy_to.Server(obj_name)
-    
-pprint(lock_data)
+# Validate
+if is_locked('/tmp/locks/server-cluster3w1-2.lock'): # or lock_data['lock_file_location']
+    # custom validation of lock information to proceed
+    if obj_status == 'MAINT':
+        deploy_to.Server(obj_name)
 
-# lock() will update the lock_data dictionary with the information with the
-# new lock info.
-{ 
-    'msg': 'Locking App1 on servera-clusterb-1 for canary deployment',
-    'data': {'backend': 'App1', 'server': 'servera-clusterb-1', 'status': 'MAINT'},
-    'contact_email': 'billyjenkins@example.com',
-    'datetime': '2019-12-19 09:26:03.478039',
-    'lock_action': 'lock'
-    'lock_file_location': '/tmp/locks/server-cluster3w1-2.lock',
-    'lock_file_status': 'locked'
-    'lock_action': 'lock'
-}
 
 # Unlock the file after completion.
 lock_data.update({'lock_action': 'unlock'})
@@ -98,6 +102,16 @@ lock('/tmp/locks/',
     lock_data['data']['server],
     lock_data=lock_data,
     lock_action=lock_data['lock_action'])
+    
+ { 
+    'msg': 'Locking App1 on server-cluster3w1-2 for canary deployment',
+    'data': {'backend': 'App1', 'server': 'server-cluster3w1-2', 'status': 'MAINT'},
+    'contact_email': 'billyjenkins@example.com',
+    'datetime': '2019-12-19 09:26:03.478039',
+    'lock_file_location': null,
+    'lock_file_status': 'unlocked'
+    'lock_action': 'unlock'
+}
 
 ```
 
