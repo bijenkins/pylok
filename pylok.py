@@ -172,6 +172,10 @@ def lock(lock_file_directory, lock_object, lock_data={}, lock_action='status', e
             current_lock_status = 'unlocked'
         else:
             current_lock_status = 'locked'
+            # Update lock data with current contents of lock file.
+            y = yaml.load(open(lock_file))
+            if y:
+                lock_data.update(y)
 
         return_info = {
             'lock_file_location': lock_file,
