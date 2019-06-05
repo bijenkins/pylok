@@ -33,39 +33,42 @@ The ability to create structured data about information needed is as easy as pas
 from pylok import lock, is_locked
 
 # Example data to be injected into the lock_file
-data_to_lock = {
-    'msg': 'Locking App1 on servera-clusterb-1 for canary deployment',
-    'data': {'backend': 'App1', 'server': 'servera-clusterb-1', 'status': 'MAINT'},
-    'contact': 'Billy Jenkins',
-    'contact_email': 'billyjenkins@example.com',
-    'datetime': '2019-12-19 09:26:03.478039',
-    'expire': '2019-12-20 00:00:00',
-    'lock_action': 'lock'
-}
 
 # Execute locking of data 
-lock_data = lock('/tmp/locks/', data_to_lock['data']['server], lock_data=data_to_lock, lock_action=data_to_lock['lock_action'], ensure_unlock_state=True)
+lock_data = lock(
+            '/tmp/locks/',
+            'servera-clusterb-1',
+            lock_data={},
+            lock_action='lock,
+            ensure_unlock_state=True)
 
 pprint(lock_data)
 
 {
-    'msg': 'Locking App1 on servera-clusterb-1 for canary deployment',
-    'data': {'backend': 'App1', 'server': 'servera-clusterb-1', 'status': 'MAINT'},
-    'contact': 'Billy Jenkins',
-    'contact_email': 'billyjenkins@example.com',
-    'datetime': '2019-12-19 09:26:03.478039',
-    'expire': '2019-12-20 00:00:00',
     'lock_file_location': '/tmp/locks/server-cluster3w1-2.lock',
     'lock_file_status': 'locked'
     'lock_action': 'lock'
 }
 
-# This information can now be used conditionally elsewhere to act upon locks, and the data in the lock file.
+lock_data.update({'msg': 'Locking App1 on servera-clusterb-1 for canary deployment',
+                'data': {'backend': 'App1', 'server': 'servera-clusterb-1', 'status': 'MAINT'},
+                'contact': 'Billy Jenkins',
+                'contact_email': 'billyjenkins@example.com',
+                'datetime': '2019-12-19 09:26:03.478039',
+                'expire': '2019-12-20 00:00:00',
+                'lock_action': 'lock'})
+
+# This information can now be used conditionally elsewhere to act upon locks, 
+# and the data in the lock file.
 
 # Later during deployment we want to check the lock status before proceeding
+# we can update and use a data source that is a dictionary similar to the one we outputed.
 lock_data.update({'lock_action': 'status'})
 
-lock_data = lock('/tmp/locks/', lock_data['data']['server], lock_data=lock_data, lock_action=lock_data['lock_action'])
+lock_data = lock('/tmp/locks/',
+            lock_data['data']['server],
+            lock_data=lock_data,
+            lock_action=lock_data['lock_action'])
 
 obj_status = lock_data['data']['status']
 obj_name = lock_data['data']['server']
@@ -75,10 +78,13 @@ if obj_status == 'MAINT':
 
 # Unlock the file after completion.
 lock_data.update({'lock_action': 'unlock'})
-lock('/tmp/locks/', lock_data['data']['server], lock_data=lock_data, lock_action=lock_data['lock_action'])
+
+lock('/tmp/locks/',
+    lock_data['data']['server],
+    lock_data=lock_data,
+    lock_action=lock_data['lock_action'])
 
 ```
-
 
 ## Parameters:
 
@@ -89,7 +95,12 @@ lock('/tmp/locks/', lock_data['data']['server], lock_data=lock_data, lock_action
 * ensure_unlock (bool): default: False | Checks for lock file, raises exception if file lock present
 * ensure_lock (bool): default: False | Checks for lock file, raises exception if file lock not present
 
-## Returns:
+## Notes
+
+* Flags *--ensure-lock* and *--ensure-unlock* have conflicting logic and will rase the *LockFilePresentError* and *LockFileNotPresentError*'s respectivly, if their validation fails
+* lock_data does not need to be provided, for the return result to contain a dictionary of lock info.
+
+## Returns/Output:
         
 Dictionary with data written to lock file as well as the initial lock_data.
     
@@ -108,21 +119,22 @@ Dictionary with data written to lock file as well as the initial lock_data.
 from pylok import *
 
 # This information will be returned to us in addition to lock data.
-data_to_lock = {
-    'msg': 'Locking for maintenance in reference to ticket 65807417',
-    'contact': 'Billy Jenkins',
-    'contact_email': 'billyjenkins@example.com',
-    'datetime': '2019-12-19 09:26:03.478039',
-    'expire': '2019-12-20 00:00:00',
-    'lock_action': 'lock'
-}
+data_to_lock = {'msg': 'Locking for maintenance in reference to ticket 65807417',
+                'contact': 'Billy Jenkins',
+                'contact_email': 'billyjenkins@example.com',
+                'datetime': '2019-12-19 09:26:03.478039',
+                'expire': '2019-12-20 00:00:00',
+                'lock_action': 'lock'}
 
 # ensure unlocked BEFORE creation of lock, lock server-cluster3w1-2, export data into lock file.
-lock_data = lock('/tmp/locks/', 'server-cluster3w1-2', lock_data=data_to_lock, lock_action=data_to_lock['lock_action'], ensure_unlock_state=True)
-```
+lock_data = lock('/tmp/locks/',
+                'server-cluster3w1-2',
+                lock_data=data_to_lock,
+                lock_action=data_to_lock['lock_action'],
+                ensure_unlock_state=True)
+                ```
 ### Output:
 
-```
 pprint(lock_data)
 
 {
@@ -136,6 +148,7 @@ pprint(lock_data)
     'lock_action': 'lock'
 }
 
+```
 
 # Expire could be controlled by a external audit/state scraper that deletes the lock at expire time.
 
@@ -143,7 +156,11 @@ pprint(lock_data)
 data_to_lock.update({'lock_action': 'status'})
 
 # Status Check
-lock_data = lock('/tmp/locks/', 'server-cluster3w1-2', lock_data=data_to_lock, lock_action=data_to_lock['lock_action'])
+lock_data = lock(
+            '/tmp/locks/',
+            'server-cluster3w1-2',
+            lock_data=data_to_lock,
+            lock_action=data_to_lock['lock_action'])
 
 pprint(lock_data)
 
@@ -159,7 +176,4 @@ pprint(lock_data)
     'lock_action': 'status'
 }
 ```
-## Notes
 
-* Flags *--ensure-lock* and *--ensure-unlock* have conflicting logic and will rase the *LockFilePresentError* and *LockFileNotPresentError*'s respectivly, if their validation fails
-* lock_data does not need to be provided, for the return result to contain a dictionary of lock info.
