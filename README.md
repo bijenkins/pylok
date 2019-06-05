@@ -31,57 +31,50 @@ The ability to create structured data about information needed is as easy as pas
 
 ```
 from pylok import lock, is_locked
+from pprint import pprint
 
 # Example data to be injected into the lock_file
 
 # Execute locking of data 
 lock_data = lock(
             '/tmp/locks/',
-            'servera-clusterb-1',
+            'server-cluster3w1-2',
             lock_data={},
-            lock_action='lock,
+            lock_action='lock',
             ensure_unlock_state=True)
 
 pprint(lock_data)
 
-{
-    'lock_file_location': '/tmp/locks/server-cluster3w1-2.lock',
-    'lock_file_status': 'locked'
-    'lock_action': 'lock'
-}
+#{'lock_file_location': '/tmp/locks/server-cluster3w1-2.lock',
+#'lock_file_status': 'locked'
+#'lock_action': 'lock'}
 
 lock_data.update({'msg': 'Locking App1 on server-cluster3w1-2 for canary deployment',
                 'data': {'backend': 'App1', 'server': 'server-cluster3w1-2', 'status': 'MAINT'},
                 'contact_email': 'billyjenkins@example.com',
                 'datetime': '2019-12-19 09:26:03.478039',
-                'lock_action': 'lock'})
-
-# This information can now be used conditionally elsewhere to act upon locks, 
-# and the data in the lock file.
-
-# Later during deployment we want to check the lock status before proceeding
-# we can update and use a data source that is a dictionary similar to the one we outputed.
-lock_data.update({'lock_action': 'status'})
+                'lock_action': 'status'})
 
 lock_data = lock('/tmp/locks/',
-            lock_data['data']['server],
+            lock_data['data']['server'],
             lock_data=lock_data,
             lock_action=lock_data['lock_action'])
            
  pprint(lock_data)
 
-{ 
-    'msg': 'Locking App1 on server-cluster3w1-2 for canary deployment',
-    'data': {'backend': 'App1', 'server': 'server-cluster3w1-2', 'status': 'MAINT'},
-    'contact_email': 'billyjenkins@example.com',
-    'datetime': '2019-12-19 09:26:03.478039',
-    'lock_file_location': '/tmp/locks/server-cluster3w1-2.lock',
-    'lock_file_status': 'locked'
-    'lock_action': 'status'
-}
+#{'contact_email': 'billyjenkins@example.com',
+# 'data': {'backend': 'App1',
+#          'server': 'server-cluster3w1-2',
+#          'status': 'MAINT'},
+# 'datetime': '2019-12-19 09:26:03.478039',
+# 'lock_action': 'status',
+# 'lock_file_location': '/tmp/locks/server-cluster3w1-2.lock',
+# 'lock_file_status': 'locked',
+# 'msg': 'Locking App1 on server-cluster3w1-2 for canary deployment'}
 
 # lock() will update the lock_data dictionary with the information with the
 # new lock info.
+
 
 obj_status = lock_data['data']['status']
 obj_name = lock_data['data']['server']
@@ -91,27 +84,29 @@ if is_locked('/tmp/locks/server-cluster3w1-2.lock'): # or lock_data['lock_file_l
     # custom validation of lock information to proceed
     if obj_status == 'MAINT':
         deploy_to.Server(obj_name)
+        setserverto.ready(obj_name)
 
-
-# Unlock the file after completion.
+# Update lock action to reuse data
 lock_data.update({'lock_action': 'unlock'})
+lock_data['data'].update({'status': 'READY'})
+lock_data.update({'msg': 'Unlocked App1 on server-cluster3w1-2, canary deployment complete'})
 
-# Will return a dictionary of combined lock information and dictionary
-# passed in the lock_data parameter. 
-lock('/tmp/locks/',
-    lock_data['data']['server],
-    lock_data=lock_data,
-    lock_action=lock_data['lock_action'])
-    
- { 
-    'msg': 'Locking App1 on server-cluster3w1-2 for canary deployment',
-    'data': {'backend': 'App1', 'server': 'server-cluster3w1-2', 'status': 'MAINT'},
-    'contact_email': 'billyjenkins@example.com',
-    'datetime': '2019-12-19 09:26:03.478039',
-    'lock_file_location': null,
-    'lock_file_status': 'unlocked'
-    'lock_action': 'unlock'
-}
+lock_data = lock('/tmp/locks/',
+            lock_data['data']['server'],
+            lock_data=lock_data,
+            lock_action=lock_data['lock_action'])
+
+pprint(lock_data)
+
+#{'contact_email': 'billyjenkins@example.com',
+# 'data': {'backend': 'App1',
+#          'server': 'server-cluster3w1-2',
+#          'status': 'READY'},
+# 'datetime': '2019-12-19 09:26:03.478039',
+# 'lock_action': 'unlock',
+# 'lock_file_location': None,
+# 'lock_file_status': 'unlocked',
+# 'msg': 'Locking App1 on server-cluster3w1-2 for canary deployment'}
 
 ```
 
